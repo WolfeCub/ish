@@ -1,0 +1,2 @@
+* ish
+Shell written in Haskell
