@@ -18,14 +18,23 @@ executeCommand cmd args = do
         Right (_, _, _, ph) -> do _ <- waitForProcess ph
                                   return ()
 
+-- Changes directory as specified by args
+-- If no args goes to home directory
+changeDirectory :: [FilePath] -> IO ()
+changeDirectory args = do case args of
+                            [] -> do
+                              home <- getHomeDirectory
+                              setCurrentDirectory home
+                              return ()
+                            _ -> setCurrentDirectory $ head $ args
+
 -- Processes the line given by the user 
 process :: [String] -> IO ()
 process line = do
-
   let (cmd:args) = line in
       case cmd of
           "exit" -> exitSuccess
-          "cd" -> setCurrentDirectory (args !! 0)
+          "cd" -> changeDirectory args
           _ -> executeCommand cmd args
 
 main :: IO()
