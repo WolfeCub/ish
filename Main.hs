@@ -16,23 +16,27 @@ prompt text = do
 try' :: IO a ->  IO (Either IOException a)
 try' =  try 
 
--- Processes the line given by the user and executes the
--- appropriate command
-process :: [String] -> IO ()
-process list = do
-  let (cmd:args) = list
-
-  case cmd of
-    "exit" -> exitSuccess
-    "cd" -> setCurrentDirectory (args !! 0)
-    _ -> do
-      s <- try' $ createProcess (proc cmd args)
-      case s of
+-- Executes cmd with arguments args with error handling
+executeCommand :: String -> [String] -> IO ()
+executeCommand cmd args = do
+    s <- try' $ createProcess (proc cmd args)
+    case s of
         Left ex -> print ex
         Right (_, _, _, ph) -> do _ <- waitForProcess ph
                                   return ()
 
-  return ()
+-- Processes the line given by the user 
+process :: [String] -> IO ()
+process line = do
+
+  case line of
+    [] -> return ()
+    _ -> let (cmd:args) = line in
+
+        case cmd of
+            "exit" -> exitSuccess
+            "cd" -> setCurrentDirectory (args !! 0)
+            _ -> executeCommand cmd args
 
 main::IO()
 main = do
