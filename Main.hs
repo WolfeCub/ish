@@ -58,7 +58,8 @@ main = runInputT defaultSettings loop
             | isAbsolute relativeWD = relativeWD
             | otherwise = "~/" ++ relativeWD
        
-      minput <- getInputLine $ "\ESC[34m\STX" ++ relativePath ++ " $\ESC[37m\STX "
+      minput <- getInputLine $ "\ESC[1m\STX\ESC[34m\STX" ++ relativePath ++
+                " \ESC[0m$\ESC[37m\STX "
       case minput of
         Nothing -> return ()
         Just input -> liftIO (process $ words input)
