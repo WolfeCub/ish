@@ -4,6 +4,7 @@ import System.Directory
 import Control.Exception
 import System.Console.Haskeline
 import Control.Monad.IO.Class
+import System.FilePath.Posix
 
 -- Defines a try that will catch the proper exceptions
 try' :: IO a ->  IO (Either IOException a)
@@ -28,10 +29,16 @@ changeDirectory args = do case args of
                               return ()
                             _ -> setCurrentDirectory $ head $ args
 
+checkAlias :: [String] -> [String]
+checkAlias line
+  | head line == "ls" = line ++ ["--color=always"]
+  | head line == "grep" = line ++ ["--color=always"]
+  | otherwise = line
+
 -- Processes the line given by the user 
 process :: [String] -> IO ()
 process line = do
-  let (cmd:args) = line in
+  let (cmd:args) = checkAlias line in
       case cmd of
           "exit" -> exitSuccess
           "cd" -> changeDirectory args
@@ -42,7 +49,16 @@ main = runInputT defaultSettings loop
   where
     loop :: InputT IO ()
     loop = do
-      minput <- getInputLine "$ "
+      homeDir <- liftIO getHomeDirectory
+      workingDir <- liftIO getCurrentDirectory
+      let relativeWD = makeRelative homeDir workingDir
+  
+      let relativePath
+            | relativeWD == "." = "~"
+            | isAbsolute relativeWD = relativeWD
+            | otherwise = "~/" ++ relativeWD
+       
+      minput <- getInputLine $ "\ESC[34m\STX" ++ relativePath ++ " $\ESC[37m\STX "
       case minput of
         Nothing -> return ()
         Just input -> liftIO (process $ words input)
